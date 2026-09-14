@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { sampleData } from "./data/sampleData";
 import { cabinet, middleManagement } from "./agents/agents";
+import { getRecommendations } from "./agents/recommendations";
+import { remaining as formatCapRemaining, capUsedPct } from "./agents/insights";
 
 export default function App() {
   const [data, setData] = useState(sampleData);
@@ -15,16 +17,23 @@ export default function App() {
 
   const agents = [...cabinet, ...middleManagement];
   const active = agents.find((a) => a.id === activeId);
+  const recs = getRecommendations(activeId, data);
 
-  const capRemaining = (
-    data.revenueShare.capTotalMillions - data.revenueShare.committedMillions
-  ).toFixed(1);
-  const capPct = Math.round(
-    (data.revenueShare.committedMillions / data.revenueShare.capTotalMillions) * 100
-  );
+  const capRemaining = formatCapRemaining(data);
+  const capPct = capUsedPct(data);
   const highAlerts = data.compliance.filter((c) => c.severity === "high").length;
 
   const log = (who, text) => setFeed((f) => [{ who, text }, ...f]);
+
+  const selectAgent = (id) => {
+    if (id === activeId) return;
+    const agent = agents.find((a) => a.id === id);
+    setActiveId(id);
+    setInput("");
+    setMessages([
+      { from: agent.title, text: agent.respond("recommend", data) },
+    ]);
+  };
 
   const send = () => {
     const q = input.trim();
@@ -56,6 +65,21 @@ export default function App() {
 
   // --- Cross-agent trigger #2: a new NIL deal ---
   const logNilDeal = () => {
+    setData((d) => ({
+      ...d,
+      nilDeals: d.nilDeals.some((n) => n.athlete === "Sample Athlete C")
+        ? d.nilDeals
+        : [
+            ...d.nilDeals,
+            {
+              athlete: "Sample Athlete C",
+              sport: "Football",
+              brand: "Apparel Co.",
+              valueK: 22,
+              status: "Pending Review",
+            },
+          ],
+    }));
     log("Compliance Operations", "New NIL deal submitted: Sample Athlete C ($22K, apparel).");
     log("Compliance Officer", "Routed to clearinghouse review (over reporting threshold). Status: Pending.");
     log("CFO", "Third-party NIL — no revenue-share cap impact. Noted for reporting.");
@@ -65,7 +89,15 @@ export default function App() {
 
   // --- Cross-agent trigger #3: every cabinet member reports in ---
   const cabinetBriefing = () => {
-    cabinet.forEach((a) => log(a.title, a.respond("brief", data)));
+    cabinet.forEach((a) => {
+      const top = getRecommendations(a.id, data)[0];
+      log(
+        a.title,
+        top
+          ? `Recommendation: [${top.priority.toUpperCase()}] ${top.title}`
+          : a.respond("brief", data)
+      );
+    });
   };
 
   return (
@@ -82,7 +114,7 @@ export default function App() {
             <button
               key={a.id}
               className={"agent" + (a.id === activeId ? " active" : "")}
-              onClick={() => setActiveId(a.id)}
+              onClick={() => selectAgent(a.id)}
             >
               {a.title}
             </button>
@@ -92,7 +124,7 @@ export default function App() {
             <button
               key={a.id}
               className={"agent" + (a.id === activeId ? " active" : "")}
-              onClick={() => setActiveId(a.id)}
+              onClick={() => selectAgent(a.id)}
             >
               {a.title}
             </button>
@@ -103,6 +135,26 @@ export default function App() {
           <div className="agent-header">
             <h2>{active.title}</h2>
             <p>{active.blurb}</p>
+          </div>
+
+          <div className="recs" data-testid="agent-recommendations">
+            <div className="group-label">
+              {activeId === "ad"
+                ? "Cabinet recommendations"
+                : `Recommendations from this agent`}
+            </div>
+            {recs.map((r) => (
+              <div key={r.id} className={"rec rec-" + r.priority}>
+                <span className="rec-pri">{r.priority}</span>
+                <div className="rec-body">
+                  <span className="rec-title">{r.title}</span>
+                  <span className="rec-detail">{r.detail}</span>
+                  {r.owner && r.owner !== active.title && (
+                    <span className="rec-owner">{r.owner}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {activeId === "ad" && (

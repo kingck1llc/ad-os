@@ -73,6 +73,50 @@ body {
 .agent-header h2 { color: var(--navy); font-size: 20px; }
 .agent-header p { color: #5a6577; font-size: 14px; margin-top: 4px; }
 
+.recs {
+  margin-top: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  padding: 8px 10px 10px;
+}
+.recs .group-label { margin-top: 4px; }
+.rec {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.rec:last-child { border-bottom: none; }
+.rec-pri {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--navy);
+  margin-top: 2px;
+}
+.rec-high .rec-pri { background: #f3d6d6; color: #8a1f1f; }
+.rec-medium .rec-pri { background: #f4e6c8; color: #7a5a12; }
+.rec-low .rec-pri { background: #dce8f5; color: var(--navy); }
+.rec-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rec-title { font-size: 13px; font-weight: 700; color: var(--navy); }
+.rec-detail { font-size: 12px; color: #5a6577; }
+.rec-owner {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
 .actions button {
   background: var(--navy);
