@@ -2,6 +2,7 @@ import { useState } from "react";
 import { sampleData } from "./data/sampleData";
 import { cabinet, middleManagement } from "./agents/agents";
 import { getRecommendations } from "./agents/recommendations";
+import { remaining as formatCapRemaining, capUsedPct } from "./agents/insights";
 
 export default function App() {
   const [data, setData] = useState(sampleData);
@@ -18,12 +19,8 @@ export default function App() {
   const active = agents.find((a) => a.id === activeId);
   const recs = getRecommendations(activeId, data);
 
-  const capRemaining = (
-    data.revenueShare.capTotalMillions - data.revenueShare.committedMillions
-  ).toFixed(1);
-  const capPct = Math.round(
-    (data.revenueShare.committedMillions / data.revenueShare.capTotalMillions) * 100
-  );
+  const capRemaining = formatCapRemaining(data);
+  const capPct = capUsedPct(data);
   const highAlerts = data.compliance.filter((c) => c.severity === "high").length;
 
   const log = (who, text) => setFeed((f) => [{ who, text }, ...f]);
